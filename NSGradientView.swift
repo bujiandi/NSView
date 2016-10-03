@@ -13,22 +13,22 @@ class NSGradientView: NSView {
     
     @IBInspectable var startingColor:NSColor = NSColor(white: 0.77, alpha: 1) {
         didSet {
-            backgroundGradient = NSGradient(startingColor: startingColor, endingColor: endingColor)!
+            backgroundGradient = NSGradient(starting: startingColor, ending: endingColor)!
         }
     }
     @IBInspectable var endingColor  :NSColor = NSColor(white: 0.92, alpha: 1) {
         didSet {
-            backgroundGradient = NSGradient(startingColor: startingColor, endingColor: endingColor)!
+            backgroundGradient = NSGradient(starting: startingColor, ending: endingColor)!
         }
     }
     
-    private var backgroundGradient = NSGradient(startingColor:
-        NSColor(white: 0.77, alpha: 1), endingColor:
+    fileprivate var backgroundGradient = NSGradient(starting:
+        NSColor(white: 0.77, alpha: 1), ending:
         NSColor(white: 0.92, alpha: 1))!
     
-    override func drawRect(dirtyRect: NSRect) {
-        super.drawRect(dirtyRect)
-        backgroundGradient.drawInRect(bounds, angle: 90)
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+        backgroundGradient.draw(in: bounds, angle: 90)
         // Drawing code here.
     }
     

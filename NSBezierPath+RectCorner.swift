@@ -8,7 +8,7 @@
 
 import Cocoa
 
-public struct NSRectCorner : OptionSetType {
+public struct NSRectCorner : OptionSet {
     
     public let rawValue: UInt
     public init(rawValue: UInt) { self.rawValue = rawValue }
@@ -27,63 +27,67 @@ extension NSBezierPath {
     public convenience init(roundedRect rect: CGRect, byRoundingCorners corners: NSRectCorner, cornerRadii: CGSize) {
         self.init()
         if corners.contains(.BottomLeft) {
-            moveToPoint(NSMakePoint(rect.minX + cornerRadii.width, rect.minY))
+            move(to: NSMakePoint(rect.minX + cornerRadii.width, rect.minY))
             //self.appendBezierPathWithArcFromPoint(NSPoint, toPoint: <#T##NSPoint#>, radius: <#T##CGFloat#>)
-            appendBezierPathWithArcWithCenter(NSMakePoint(rect.minX + cornerRadii.width, rect.minY + cornerRadii.height), radius: cornerRadii.width, startAngle: 270, endAngle: 180, clockwise: true)
+            appendArc(withCenter: NSMakePoint(rect.minX + cornerRadii.width, rect.minY + cornerRadii.height), radius: cornerRadii.width, startAngle: 270, endAngle: 180, clockwise: true)
         } else {
-            moveToPoint(NSMakePoint(rect.minX, rect.minY))
+            move(to: NSMakePoint(rect.minX, rect.minY))
         }
         
         if corners.contains(.TopLeft) {
-            lineToPoint(NSMakePoint(rect.minX, rect.maxY - cornerRadii.height))
-            appendBezierPathWithArcWithCenter(NSMakePoint(rect.minX + cornerRadii.width, rect.maxY - cornerRadii.height), radius: cornerRadii.width, startAngle: 180, endAngle: 90, clockwise: true)
+            line(to: NSMakePoint(rect.minX, rect.maxY - cornerRadii.height))
+            appendArc(withCenter: NSMakePoint(rect.minX + cornerRadii.width, rect.maxY - cornerRadii.height), radius: cornerRadii.width, startAngle: 180, endAngle: 90, clockwise: true)
         } else {
-            lineToPoint(NSMakePoint(rect.minX, rect.maxY))
+            line(to: NSMakePoint(rect.minX, rect.maxY))
         }
         
         if corners.contains(.TopRight) {
-            lineToPoint(NSMakePoint(rect.maxX - cornerRadii.width, rect.maxY))
-            appendBezierPathWithArcWithCenter(NSMakePoint(rect.maxX - cornerRadii.width, rect.maxY - cornerRadii.height), radius: cornerRadii.width, startAngle: 90, endAngle: 0, clockwise: true)
+            line(to: NSMakePoint(rect.maxX - cornerRadii.width, rect.maxY))
+            appendArc(withCenter: NSMakePoint(rect.maxX - cornerRadii.width, rect.maxY - cornerRadii.height), radius: cornerRadii.width, startAngle: 90, endAngle: 0, clockwise: true)
         } else {
-            lineToPoint(NSMakePoint(rect.maxX, rect.maxY))
+            line(to: NSMakePoint(rect.maxX, rect.maxY))
         }
         
         if corners.contains(.BottomRight) {
-            lineToPoint(NSMakePoint(rect.maxX, rect.minY + cornerRadii.height))
-            appendBezierPathWithArcWithCenter(NSMakePoint(rect.maxX - cornerRadii.width, rect.minY + cornerRadii.height), radius: cornerRadii.width, startAngle: 0, endAngle: 270, clockwise: true)
+            line(to: NSMakePoint(rect.maxX, rect.minY + cornerRadii.height))
+            appendArc(withCenter: NSMakePoint(rect.maxX - cornerRadii.width, rect.minY + cornerRadii.height), radius: cornerRadii.width, startAngle: 0, endAngle: 270, clockwise: true)
         } else {
-            lineToPoint(NSMakePoint(rect.maxX, rect.minY))
+            line(to: NSMakePoint(rect.maxX, rect.minY))
         }
-        closePath()
+        close()
     }
     
     var cgPath:CGPath? {
         if elementCount == 0 { return nil }
         var didClosePath:Bool = true
-        let path:CGMutablePath? = CGPathCreateMutable()
+        let path:CGMutablePath = CGMutablePath()
         var points:[NSPoint] = [NSMakePoint(0, 0),NSMakePoint(0, 0),NSMakePoint(0, 0)]
+        //var transform:CGAffineTransform = CGAffineTransform()
         for i in 0..<elementCount {
-            switch elementAtIndex(i, associatedPoints: &points) {
-            case .MoveToBezierPathElement:
-                CGPathMoveToPoint(path, nil, points[0].x, points[0].y)
-            case .LineToBezierPathElement:
-                CGPathAddLineToPoint(path, nil, points[0].x, points[0].y)
+            switch element(at: i, associatedPoints: &points) {
+            case .moveToBezierPathElement:
+                path.move(to: points[0])
+                //CGPathMoveToPoint(path, &transform, points[0].x, points[0].y)
+            case .lineToBezierPathElement:
+                path.addLine(to: points[0])
+                //CGPathAddLineToPoint(path, &transform, points[0].x, points[0].y)
                 didClosePath = false
-            case .CurveToBezierPathElement:
-                CGPathAddCurveToPoint(path, nil,
-                                      points[0].x, points[0].y,
-                                      points[1].x, points[1].y,
-                                      points[2].x, points[2].y)
+            case .curveToBezierPathElement:
+                path.addCurve(to: points[0], control1: points[1], control2: points[2])
+//                CGPathAddCurveToPoint(path, &transform,
+//                                      points[0].x, points[0].y,
+//                                      points[1].x, points[1].y,
+//                                      points[2].x, points[2].y)
                 didClosePath = false
-            case .ClosePathBezierPathElement:
-                CGPathCloseSubpath(path)
+            case .closePathBezierPathElement:
+                path.closeSubpath()
                 didClosePath = true
             }
         }
         if !didClosePath {
-            CGPathCloseSubpath(path)
+            path.closeSubpath()
         }
-        return CGPathCreateCopy(path)
+        return path.copy()
     }
 }
 //class NSBezierPath_RectCorner {
